@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Bootstrap demo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <style>
         
         .col-6 {
@@ -27,65 +29,352 @@
             left:50%;
             top: 50%;
             transform: translate(-50%,-50%);
-            
-           
+          
         }
+
+        .topbig-box
+        {
+       	width: 600px;
+        height: 200px;
+        display: grid; /*allows both vertica and horisontall centering with place items! very clean way! second way is using flex box, align-items justify-content. but grid does both!. you can also set line-hight to height old trick.*/
+        place-items: center;
+        /*top: 100px;*/
+        }
+
+        .oldfrontElement
+        {
+           position:absolute;
+           z-index: 999;
+           width: 300px;
+           height: 200px;
+           top: 100px;
+           left: 2vw;
+        }
+
+        .frontElement{
+          z-index: 999;
+          width: 600px;
+          height: 200px;
+        }
+
+       @keyframes slideRight
+       {
+          from {left: 2vw;}  
+          to {left: 50vw;} /*transform: translateX(calc(50vw + 1%));}*/
+       }
+     
+	.animationElement
+	{
+	   position:absolute;
+           animation:slideRight 2s;
+           
+           animation-fill-mode:forwards;
+           animation-timing-function: ease;
+           animation-iteration-count: 1;
+	}
+	
+	.fade-in
+	{
+	  opacity: 0;
+          transition: opacity 0.5s ease-in-out;
+	}
+        
+        .fade-in-show
+	{
+	  opacity:1;
+	}
     </style>
 
   </head>
   <body>
-    <h1>Bootstrap combined with regular css positioning demo!(obs vertical line, is placed this way by purpose).</h1>
-    <div class="h4">This Tests flex-box justify-content-start. The 2nd Box to the right of the left box (in second col), should take 1st box's place if first one is erased after 2s TimeOut.</div>
+    <!-- <h1>Bootstrap combined with regular css positioning demo!(obs vertical line, is placed this way by purpose).</h1>
+     can be achieved using left:50% (left border will be placed in middle ) then shifting back half of the elements width (transform:translateY(50%)) can also be done horisontally with translate X and you can skip text-center.  
+        in t<div class="h4">This Tests flex-box justify-content-start. The 2nd Box to the right of the left box (in second col), should take 1st box's place if first one is erased after 2s TimeOut.</div>
     <div class="h4">This uses bootstrap row with 2 col-6 for controlled column width. flex box is used to align content. vertical line use position absolute. 
         Tips: Dont' forget to add sizing:border-box to the bs col's if you want margins and don't want added margin to break the row width,  but you want m and p to be included in total col width.
         Also: for centering of div (block items) content in a div it is convenient to use display grid and place-items center, since text-center does only work to center inline elements. for these you still need vertical centering.
-        this can be achieved using left:50% (left border will be placed in middle ) then shifting back half of the elements width (transform:translateY(50%)) can also be done horisontally with translate X and you can skip text-center.  
-        in this case element needs position (any). another tips on margins is to set padding on parent div instead of margins on if using bootstrap.  
-    </div>
+        thishis case element needs position (any). another tips on margins is to set padding on parent div instead of margins on if using bootstrap.  
+    </div> -->
     <div class="container-fluid">
     <div class="row mt-5">
-        <div class="col-6 p-3 d-flex flex-wrap justify-content-start gap-3">
-            <div class="box bg-warning">
-                I size to content
-            </div>
-            <div class="box bg-warning">
-                I size to content
-            </div>
-            <div class="box bg-warning">
-                I size to content
-            </div>
-            <div class="box bg-warning">
-                I size to content
-            </div>
-            <div class="box bg-warning">
-                I size to content
+        <div id="incoming-boxes" class="col-6 p-3">
+          <div class="h5 d-flex justify-content justify-content-center pb-5">Prepared</div>
+            <div id="incoming-inner" class="d-flex flex-wrap justify-content-start gap-3 position-relative">
+                <div id="Box1"class="box bg-warning">
+                    sample order
+                </div>
+                <!-- <div class="box bg-warning">
+                    I size to content
+                </div>
+                <div class="box bg-warning">
+                    I size to content
+                </div>
+                <div class="box bg-warning">
+                    I size to content
+                </div>
+                <div class="box bg-warning">
+                    I size to content
+                </div> -->
             </div>
         </div>
-        <div class="col-6 p-3 d-flex flex-wrap justify-content-start gap-3">
-           
-            <div id="test-align-box" class="box bg-warning">
-                test flex-box justify-content-start- box to right should take this boxs place if this is erased after TimeOut?
+        <div id="ready-boxes" class="col-6 p-3">
+          <div class="h5 d-flex justify-content justify-content-center pb-5">Ready</div>
+
+            <div id="ready-inner" class="d-flex flex-wrap justify-content-start gap-3 position-relative">
+                <div class="topbig-box">
+                     
+                </div>
+                <div class="box bg-warning">
+                    sample ready
+                </div>
+                <div class="box bg-warning">
+                    sample ready
+                </div>
+                <div class="box bg-warning">
+                    sample ready
+                </div>
             </div>
-            <div class="box bg-warning">
-                I size to content
-            </div>
-            <div class="box bg-warning">
-                I size to content
-            </div>
-            <div class="box bg-warning">
-                I size to content
-            </div>
-          
       </div>
-     /* test commit*/
+    
     </div>
     </div>
     <div class="vertical-line"></div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
     <script>
-        let element = document.getElementById("test-align-box");
-        setTimeout(() => { element.remove()}, 2000);
-    </script>
+        // let element = document.getElementById("test-align-box");
+        // setTimeout(() => { element.remove()}, 2000);
+   
+        let orderNr = 0;        
+  
+        function testadd()
+        {  
+            addBoxToParent("incoming-inner", "newtest1", "order5");
+           /*addBoxToParent("incoming-boxes", "newtest1", "order5");*/
+  
+        }
+        
+        function mockFetchOrders()
+        {
+ 
+           setInterval(() => { 
+              orderNr++;
+              const order = { id : orderNr, name: "order" + orderNr};
+              addBoxToParent("incoming-inner", order.name, order.id );
+          }, 5000)
+        
+        }
+
+        function mockReadyOrder(){
+          //TODO pass a random ready order to MoveBoxRight and waitForRemoveFlag;
+          let orderNr = Math.floor(Math.random() * 10);
+          let randomReady = Math.floor(Math.random() * 100);
+          let isReady =  randomReady < 51 ?  false : true;
+          let randomOrder = { id : orderNr, name: "order" + orderNr, isReady};
+          
+          return randomOrder;
+        }
+          
+          
+            
+
+        function setRelativeTopPosition(element, referenceElement)
+        {
+              /*const reference = element.querySelectorAll('.box')[0];  get first child*/
+             //Place at same vertical offset
+              element.style.top = referenceElement.offsetTop + "px";
+               
+        }
+      
+ 
+     function addBoxToParent(parentId, innerText, setId)
+     {
+        let parent = document.getElementById(parentId);
+            let childBox = document.createElement("div");
+            childBox.id = setId;
+            childBox.innerText = innerText;
+            childBox.classList.add("box", "bg-success", "fade-in");
+            parent.appendChild(childBox);
+    
+           /*default way of making sure changes gets set for browser in this case that opacity is set (it may be a time lag after classList.add fade-in) to 0 and before changing it in the next animation frame.  */
+       requestAnimationFrame(() => {       
+               requestAnimationFrame(() => {
+                childBox.classList.add("fade-in-show");
+              });
+          });
+     }
+
+     function addBoxOrderToParent(order){
+      
+      addBoxToParent("incoming-inner","order" + order.id, order.id);
+        
+     }
+         
+     function removeBox(boxId)
+     {
+       let element = document.getElementById(boxId);
+           element.parentNode.removeChild(element)
+     }
+ 
+     function isCurrentAnimation()
+     {
+       return document.querySelector('.animationElement');
+     }  
+       
+         function addNewOrder(orderid, nametext)
+         {
+           let parent = "incoming-inner";
+           addBoxToParent(parent, nametext, orderid); 
+         }
+ 
+    let ready = true; 
+    let newordercounter = 0;
+    let ordername = "";
+    let orderid = "";
+    /*const myTimeout = setInterval(() => { orderid = "order" +  newordercounter++; ordername = newordercounter;  addNewOrder(orderid, ordername );}, 5000); */ /*make this OnClick to test and then fetch real order*/
+    
+    const myTimeout2 = setTimeout(() => { ready = true;}, 10000);
+    /*make regular checks for ready order and then resolve the promise*/
+    
+    function waitForRemoveFlag(orderId) { //()
+      return new Promise(resolve => {
+        const interval = setInterval(() => {  
+           if (ready) { 
+             let nextOrderReady = orderNr;
+             let element = document.getElementById(orderId); 
+             //let element = document.getElementById("Box1"); /*TODO: check for specific order*/
+             AddListenerOnAnimation(element); /*set event befor animation is applied of the conditions after the animation*/
+             
+             takeToFrontAsBigBox(element); /*TODO: necessary but try to have it remain relative since you want same height but take it out of flow try change z-index instead of and add animation*/
+ 
+              requestAnimationFrame(() => {       /*trigger reflow - important because the animation will only be triggered on a change(rendering of big box and adding of the animation may be in one step in the browser so the animation may have to make sure that each step is individually) do it like this or by doing an offset */
+                requestAnimationFrame(() => {
+                  element.classList.add("animationElement");
+                  ready = false;  //set to false when starting animation to make other ready orders wait with animation until it is done. after added to flow and (big)frontElement is removed other ready orders can play it's animation.
+               
+                });
+              });
+      
+             clearInterval(interval);
+             
+             resolve(element);
+             }
+        }, 100);
+      })
+    }
+ 
+    function takeToFrontAsBigBox(element)
+    { 
+       element.classList.add("frontElement", "h4");
+       let top = window.getComputedStyle(document.querySelector('#Box1')).top;
+       //let topposition = document.getElementById("Box1").style.top.valueOf();
+       element.style.top = top;
+       //setRelativeTopPosition(element, );
+       //element.style.top = element.offsetTop + "px"; //TODO: check when if will this be changed back?
+    }
+      
+       
+    function AddListenerOnAnimation(element)
+    {
+       
+       element.addEventListener("animationend", () => {
+       element.classList.remove("animationElement");
+       
+       MoveOrder(element);
+       
+       })
+    }
+    
+   async function MoveBigBoxToRight(order)
+   {
+     await waitForRemoveFlag(order.id);
+     
+     console.log("should be moved to ready orders after the move by listener")
+        
+   }
+   
+   
+   function MoveOrder(element) //move right to ready orders col and manage placeholder(take temprarilly out of flow for new box display as first) box then add new order box to flow
+   {  //TO DO clean up code 
+       let newelement = document.createElement("div");
+       newelement.innerHTML = element.innerHTML;
+       newelement.id = element.id;
+       newelement.classList.add("box", "bg-primary", "frontElement");
+       /*let parent = document.getElementById("incoming-inner");*/
+       element.remove();
+       let newparent = document.getElementById("ready-inner");
+       newelement.style.position = "relative";
+       newelement.style.zIndex = "0";
+      
+       /*newelement.classList.remove("frontElement"); /*removes the z-index*/ /*now add the ready order to the flow again after animation*/
+       newparent.children[0].style.zIndex = "999"; //sets placeholder to appear behind the new moved ready order
+       newparent.children[0].style.position = "absolute";
+       newparent.insertBefore(newelement, newparent.children[1]);//the placeholder even though it has z index it is still firstchild of ready-inner so new element should be set as second child, but z index of placeholder should appear in same place as invisible background. then changing back when added below to keep the placeholder place.
+      
+       console.log("moved order to ready flow?");
+ 
+       addTimeOutRemoveFromReadyConstraint(newelement, newparent.children[0]);
+   }
+ 
+   function addTimeOutRemoveFromReadyConstraint(element, readyparentplaceholder)
+   {
+     const  movedownTimeout = setTimeout(() => { //move back to flow after 5 s 
+       readyparentplaceholder.style.removeProperty("zIndex");
+       readyparentplaceholder.style.position = "relative";
+       element.classList.remove("frontElement");}, 5000);
+       ready = true;
+       const removeTimeout = setTimeout(() => {element.remove();}, 10000);//delete element after 5 more seconds 
+   }
+
+   function InOrderExist(id)
+   {
+     console.log("randomid:", id);
+    
+      var isfound = false;
+      let incoming = document.getElementById("incoming-inner");
+      for (let i = 0; i < incoming.children.length; i++){
+        console.log("i", i);
+        console.log("child i:", incoming.children[i]); 
+        
+        // if(!incoming.children[i].hasOwnProperty("id")){
+        //   return false;
+        // }
+        // else
+        // {
+          if(incoming.children[i].id == id){
+            isfound = true;
+            console.log("matching id!");
+          }
+            
+        //}
+      }
+          //if(incoming.children.(item => item.id == id)){
+      return isfound;
+      
+   }
+ 
+   
+   //mockFetchOrders();
+   function MockProcessOrders(){
+   
+   let randomorder = mockReadyOrder();
+   console.log(randomorder);
+   console.log("orderExist?:", InOrderExist(randomorder.id));
+   if(!randomorder.isReady && !InOrderExist(randomorder.id)){
+      addBoxOrderToParent(randomorder);
+   }
+   else if(randomorder.isReady == true && InOrderExist(randomorder.id)) //ready == no current animation
+   {
+      MoveBigBoxToRight(randomorder); //promise that waits for other ready animations
+   }
+   
+  }
+  
+  setInterval(() => MockProcessOrders(), 4000);
+  
+  
+  //MoveBigBoxToRight();
+   
+   </script>  
 
    </body>
 </html>
