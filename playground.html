@@ -18,6 +18,7 @@
   <title>Clean Orders</title>
 </head>
 <body>
+  
   <h5>Orders In</h5>
   <div id="in">
     <div id="order-1" class="box">order 1</div>
@@ -27,11 +28,12 @@
 
   <h5>Orders Out</h5>
   <div id="out">
+    <div id="order-4" class="box">order 4</div>
 
   </div>
 
   <script>
-    // Global persistent mock order list
+    
     const ordersList = [
       { orderNr: 1, name: "order1", isReady: true },
       { orderNr: 2, name: "order2", isReady: true },
@@ -79,10 +81,15 @@
        setTimeout(run, 4000); // Call recursively to avoid the loop could overlap if getNextOder takes longer than 4 s you could mutate over a shred state , but there is no lock in js on lists etc. there may be a racing condition.
     };
 
-    run(); // Starts it
+    setTimeout(()=> 
+    {
+      let element = document.getElementById("order-1");
+      let parent = document.getElementById("out");
+      //element.style.visibility = "hidden";
+      parent.insertBefore(element, parent.children[0]);
 
+    }, 2000);
 
-    //processOrders();
   </script>
 </body>
 </html>

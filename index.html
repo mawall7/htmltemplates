@@ -34,9 +34,10 @@
 
         .topbig-box
         {
+        
        	width: 600px;
         height: 200px;
-        display: grid; /*allows both vertica and horisontall centering with place items! very clean way! second way is using flex box, align-items justify-content. but grid does both!. you can also set line-hight to height old trick.*/
+        display: grid; /*allows both vertical and horizontal centering with place items! very clean way! second way is using flex box, align-items justify-content. but grid does both!. you can also set line-hight to height old trick.*/
         place-items: center;
         /*top: 100px;*/
         }
@@ -53,14 +54,14 @@
 
         .frontElement{
           z-index: 999;
-          width: 600px;
+          width: 632px;
           height: 200px;
         }
 
        @keyframes slideRight
        {
-          from {left: 2vw;}  
-          to {left: 50vw;} /*transform: translateX(calc(50vw + 1%));}*/
+          from {left:2vw;}  
+          to {left: 51vw;} /*transform: translateX(calc(50vw + 1%));}*/
        }
      
 	.animationElement
@@ -76,10 +77,10 @@
 	.fade-in
 	{
 	  opacity: 0;
-          transition: opacity 0.5s ease-in-out;
+    transition: opacity 0.5s ease-in-out;
 	}
         
-        .fade-in-show
+  .fade-in-show
 	{
 	  opacity:1;
 	}
@@ -121,9 +122,9 @@
           <div class="h5 d-flex justify-content justify-content-center pb-5">Ready</div>
 
             <div id="ready-inner" class="d-flex flex-wrap justify-content-start gap-3 position-relative">
-                <div class="topbig-box">
+                <!-- <div class="topbig-box">
                      
-                </div>
+                </div> -->
                 <div class="box bg-warning">
                     sample ready
                 </div>
@@ -144,8 +145,11 @@
         // let element = document.getElementById("test-align-box");
         // setTimeout(() => { element.remove()}, 2000);
    
-        let orderNr = 0;        
-  
+        let orderNr = 0;  
+        
+        let orderQueue = [];
+        let isProcessingOrder = false;
+        let HandledOrders = new Set();
         function testadd()
         {  
             addBoxToParent("incoming-inner", "newtest1", "order5");
@@ -166,7 +170,7 @@
 
         function mockReadyOrder(){
           //TODO pass a random ready order to MoveBoxRight and waitForRemoveFlag;
-          let orderNr = Math.floor(Math.random() * 10);
+          let orderNr = Math.floor(Math.random() * 10) + 1;
           let randomReady = Math.floor(Math.random() * 100);
           let isReady =  randomReady < 51 ?  false : true;
           let randomOrder = { id : orderNr, name: "order" + orderNr, isReady};
@@ -174,9 +178,26 @@
           return randomOrder;
         }
           
-          
-            
+        function enqueueReadyOrder(order) {
+          if(HandledOrders.has(order.id)) return;
+          orderQueue.push(order);
+          HandledOrders.add(order.id);
+          processQueue(); // Start processing if not already
+        }
 
+        async function processQueue() {
+          if (isProcessingOrder) return;
+          isProcessingOrder = true;
+
+          while (orderQueue.length > 0) {
+            const nextOrder = orderQueue.shift();
+            await MoveBigBoxToRight(nextOrder); // uses your promise-based waitForRemoveFlag
+        }
+
+          isProcessingOrder = false;
+        }
+
+      
         function setRelativeTopPosition(element, referenceElement)
         {
               /*const reference = element.querySelectorAll('.box')[0];  get first child*/
@@ -185,9 +206,11 @@
                
         }
       
- 
-     function addBoxToParent(parentId, innerText, setId)
+     function addBoxToParent(parentId, innerText, setId)//adds new incoming order to left column 
      {
+         //HandledOrder check to see if an order with that ordernumber allready been processed 
+        if (document.getElementById(setId) || HandledOrders.has(setId)) return;
+        
         let parent = document.getElementById(parentId);
             let childBox = document.createElement("div");
             childBox.id = setId;
@@ -206,6 +229,7 @@
      function addBoxOrderToParent(order){
       
       addBoxToParent("incoming-inner","order" + order.id, order.id);
+      
         
      }
          
@@ -222,34 +246,76 @@
        
          function addNewOrder(orderid, nametext)
          {
+           if(HandledOrders.has(orderid)) return;
            let parent = "incoming-inner";
            addBoxToParent(parent, nametext, orderid); 
          }
  
-    let ready = true; 
+    let ready = true; //ready means that order can be moved and animation played (no other animation is being played or order is moved at the moment an readyorder should wait for other ready orders)
     let newordercounter = 0;
     let ordername = "";
     let orderid = "";
     /*const myTimeout = setInterval(() => { orderid = "order" +  newordercounter++; ordername = newordercounter;  addNewOrder(orderid, ordername );}, 5000); */ /*make this OnClick to test and then fetch real order*/
     
-    const myTimeout2 = setTimeout(() => { ready = true;}, 10000);
+    //const myTimeout2 = setTimeout(() => { ready = true;}, 10000);
     /*make regular checks for ready order and then resolve the promise*/
     
     function waitForRemoveFlag(orderId) { //()
       return new Promise(resolve => {
         const interval = setInterval(() => {  
            if (ready) { 
+             ready = false;
              let nextOrderReady = orderNr;
              let element = document.getElementById(orderId); 
              //let element = document.getElementById("Box1"); /*TODO: check for specific order*/
-             AddListenerOnAnimation(element); /*set event befor animation is applied of the conditions after the animation*/
              
-             takeToFrontAsBigBox(element); /*TODO: necessary but try to have it remain relative since you want same height but take it out of flow try change z-index instead of and add animation*/
+             AddFlyer(element.id);
+             AddListenerOnAnimation("flyer", element.id); /*set event before animation is applied of the conditions after the animation*/
+             
+            takeToFrontAsBigBox(element); /*TODO: necessary but try to have it remain relative since you want same height but take it out of flow try change z-index instead of and add animation*/
+             if (!element) {
+                clearInterval(interval);
+                resolve(null);
+                return;
+              }
+
+             // Remove previous frontElement BEFORE new one starts animating
+            // const prevFront = parent.querySelector(".frontElement");
+            // if (prevFront) {
+            //   prevFront.classList.remove("frontElement", "h4");
+            //   prevFront.style.zIndex = "0";
+            //   prevFront.style.position = "relative";
+            // }  
+            
+            AddReadyOrder(orderId); 
+            // if (element && element.parentNode) {
+            //    element.parentNode.removeChild(element);
+            // }
+            // Inside waitForRemoveFlag(), before inserting placeholder:
+            const parent = document.getElementById("ready-inner");
+            let flyer = document.getElementById("flyer");
+           
+
+              
+              
  
               requestAnimationFrame(() => {       /*trigger reflow - important because the animation will only be triggered on a change(rendering of big box and adding of the animation may be in one step in the browser so the animation may have to make sure that each step is individually) do it like this or by doing an offset */
                 requestAnimationFrame(() => {
-                  element.classList.add("animationElement");
-                  ready = false;  //set to false when starting animation to make other ready orders wait with animation until it is done. after added to flow and (big)frontElement is removed other ready orders can play it's animation.
+                  flyer.classList.add("animationElement");
+                  //add the placeholder 
+                  // const parent = document.getElementById("ready-inner");
+                  // let placeholder = document.createElement("div");
+                  // placeholder.id = "placeholder";
+                  // placeholder.classList.add("topbig-box");
+                  // if (parent.firstChild) {
+                 
+                  // parent.insertBefore(placeholder, parent.children[0]);
+                  // } else {
+                  //   parent.appendChild(element);
+                  // }
+
+                   //listener previoulsy defined will work after applying the animation
+                  //ready = false;  //set to false when starting animation to make other ready orders wait with animation until it is done. after added to flow and (big)frontElement is removed other ready orders can play it's animation.
                
                 });
               });
@@ -261,8 +327,8 @@
         }, 100);
       })
     }
- 
-    function takeToFrontAsBigBox(element)
+    
+    function takeToFrontAsBigBox(element)//animates the order and changes to bigger size
     { 
        element.classList.add("frontElement", "h4");
        let top = window.getComputedStyle(document.querySelector('#Box1')).top;
@@ -271,82 +337,238 @@
        //setRelativeTopPosition(element, );
        //element.style.top = element.offsetTop + "px"; //TODO: check when if will this be changed back?
     }
-      
-       
-    function AddListenerOnAnimation(element)
+
+    function AddFlyer(orderid)
     {
+        let incoming = document.getElementById("incoming-inner");
+        let rect;
+        
+        console.log("incoming.firstChild", incoming.firstElementChild);
+        if(incoming.firstElementChild)
+        {
+          rect = incoming.firstElementChild.getBoundingClientRect();
+          style = window.getComputedStyle(incoming.firstElementChild);
+         
+        }
+        
+
+
+        let flyer = document.createElement("div");
+        flyer.id = "flyer";
+        flyer.style.position = "fixed";
+        flyer.style.top = rect.top + "px";
+        flyer.style.left = rect.left + "px";
+        flyer.classList.add("frontElement", "bg-primary", "h4", "text-white", "topbig-box");
+        flyer.innerText = "order" + orderid; 
+        
+        document.body.appendChild(flyer);
+          
+    }
+
+
+
+    function AddReadyOrder(orderid)
+    {
+      
+      let element = document.getElementById(orderid);
+      //document.getElementById(orderid);
+      // const incomingParent = document.getElementById("incoming-inner");
+      //   if (incomingParent.contains(element)) {
+      //   incomingParent.removeChild(element);
+      //   }
+
+        //clean old frontElement class if present then isert new ready
+        element.style.position = "relative";
+        element.style.zIndex = "0";
+        element.style.visibility = "hidden";
+        element.classList.add("topbig-box", "h4", "text-white");
+
+          
+        const parent = document.getElementById("ready-inner");
+        
+        if (parent.firstChild) {
+          parent.children[0].classList.remove("topbig-box","frontElement", "h4");
+          
+         
+          parent.insertBefore(element, parent.children[0]);
+
+        } 
+        else 
+        {
+          parent.appendChild(element);
+        }
+        
        
-       element.addEventListener("animationend", () => {
-       element.classList.remove("animationElement");
+}
+
+    
+      
+    
+    function AddListenerOnAnimation(flyerid, orderid)
+    {
+      //MoveOrder(orderId); new code: NO other ready order seem to replace it! nothing other happens just one reay animatin plays
+      let flyerelement = document.getElementById(flyerid);
+      let orderelement = document.getElementById(orderid);
+      
+      flyerelement.addEventListener("animationend", () => {
+        // let placeholder = document.getElementById("placeholder");
+        // placeholder.remove(); //TODO: there is a problem with this approach an instant flickering of the screen because the css will place all boxes on top very breifly! 
+        //element.classList.remove("animationElement");
+
+        flyerelement.remove();
+        orderelement.style.visibility = "visible";
+        // const incomingParent = document.getElementById("incoming-inner");
+        // if (incomingParent.contains(element)) {
+        // incomingParent.removeChild(element);
+        // }
        
-       MoveOrder(element);
+        // //clean old frontElement class if present then isert new ready
+        // element.style.position = "relative";
+        // element.style.zIndex = "0";
+          
+        // const parent = document.getElementById("ready-inner");
+        
+        // if (parent.firstChild) {
+        //   parent.children[0].classList.remove("frontElement", "h4");
+         
+         
+        //   parent.insertBefore(element, parent.children[0]);
+        //   void element.offsetWidth; //doesnt work
+        //   triggerFadeIn(element);   //
+         
+
+        // } else {
+        //   parent.appendChild(element);
+        //   void element.offsetWidth; //doesnt work
+        //   triggerFadeIn(element);  //
+        // }
+      
+        addTimeOutRemoveFromReadyConstraint(orderelement);
+        setTimeout(() => 
+        {
+          ready = true;
+          
+        }, 1000);
+        
        
-       })
+      })//},{once:true });
     }
     
-   async function MoveBigBoxToRight(order)
+   async function MoveBigBoxToRight(order) //not used at the moment
    {
-     await waitForRemoveFlag(order.id);
+     let element = await waitForRemoveFlag(order.id);
+     if (!element) return;
+     console.log("Animation completed for:", order.id);
      
      console.log("should be moved to ready orders after the move by listener")
         
    }
    
-   
-   function MoveOrder(element) //move right to ready orders col and manage placeholder(take temprarilly out of flow for new box display as first) box then add new order box to flow
-   {  //TO DO clean up code 
-       let newelement = document.createElement("div");
-       newelement.innerHTML = element.innerHTML;
-       newelement.id = element.id;
-       newelement.classList.add("box", "bg-primary", "frontElement");
-       /*let parent = document.getElementById("incoming-inner");*/
-       element.remove();
-       let newparent = document.getElementById("ready-inner");
-       newelement.style.position = "relative";
-       newelement.style.zIndex = "0";
-      
-       /*newelement.classList.remove("frontElement"); /*removes the z-index*/ /*now add the ready order to the flow again after animation*/
-       newparent.children[0].style.zIndex = "999"; //sets placeholder to appear behind the new moved ready order
-       newparent.children[0].style.position = "absolute";
-       newparent.insertBefore(newelement, newparent.children[1]);//the placeholder even though it has z index it is still firstchild of ready-inner so new element should be set as second child, but z index of placeholder should appear in same place as invisible background. then changing back when added below to keep the placeholder place.
-      
-       console.log("moved order to ready flow?");
+   //not used now. handling ready boxes in animationlistener instead or processor , for clearer code.
+   function MoveOrder(orderId) //move right to ready orders col and manage placeholder(take temprarilly out of flow for new box display as first) box then add new order box to flow
+   {  //TO DO clean up code
+      const element = document.getElementById(orderId);
+      if (!element) return;
+
+      element.classList.remove("animationElement");
+      element.style.position = "relative";
+      element.style.zIndex = "0";
+      element.classList.remove("frontElement", "h4");
+
+      const parent = document.getElementById("ready-inner");
+
+      // if(parent.children[0]){  //new change see if existing ready big order is moved and shrinks by the new ready order
+      //   parent.firstChild.classList.remove("frontElement", "h4");
+      // }
+
+      parent.insertBefore(element, parent.children[1]);
+
+      //const placeholder = parent.children[0];
+      const placeholder = parent.querySelector('.topbig-box'); //TODO check if this is used at all??
+
+      placeholder.style.zIndex = "999";
+      placeholder.style.position = "absolute";
+
+      addTimeOutRemoveFromReadyConstraint(element, placeholder);
  
-       addTimeOutRemoveFromReadyConstraint(newelement, newparent.children[0]);
+      // let element = document.getElementById(orderId); 
+    
+      //  let newelement = document.createElement("div");
+      //  newelement.innerHTML = element.innerHTML;
+      //  newelement.id = element.id;
+      //  newelement.classList.add("box", "bg-primary", "frontElement", "h4");
+      //  /*let parent = document.getElementById("incoming-inner");*/
+      //  element.remove();
+      //  let newparent = document.getElementById("ready-inner");
+      //  newelement.style.position = "relative";
+      //  newelement.style.zIndex = "0";
+      // // newelement.style.fontSize = 
+      //  /*newelement.classList.remove("frontElement"); /*removes the z-index*/ /*now add the ready order to the flow again after animation*/
+      //  newparent.children[0].style.zIndex = "999"; //sets placeholder to appear behind the new moved ready order
+      //  newparent.children[0].style.position = "absolute";
+      //  newparent.insertBefore(newelement, newparent.children[1]);//the placeholder even though it has z index it is still firstchild of ready-inner so new element should be set as second child, but z index of placeholder should appear in same place as invisible background. then changing back when added below to keep the placeholder place.
+      
+      //  console.log("moved order to ready flow?");
+ 
+      //  addTimeOutRemoveFromReadyConstraint(newelement, newparent.children[0]);
    }
- 
-   function addTimeOutRemoveFromReadyConstraint(element, readyparentplaceholder)
+    //not used now
+   function OldaddTimeOutRemoveFromReadyConstraint(element, readyparentplaceholder)
    {
      const  movedownTimeout = setTimeout(() => { //move back to flow after 5 s 
        readyparentplaceholder.style.removeProperty("zIndex");
        readyparentplaceholder.style.position = "relative";
-       element.classList.remove("frontElement");}, 5000);
        ready = true;
+       element.classList.remove("frontElement", "h4");}, 5000);
+       //ready = true;
+       const removeTimeout = setTimeout(() => {element.remove();}, 10000);//delete element after 5 more seconds 
+   }
+   
+   function addTimeOutRemoveFromReadyConstraint(element)
+   {
+    
+       //ready = true;
        const removeTimeout = setTimeout(() => {element.remove();}, 10000);//delete element after 5 more seconds 
    }
 
-   function InOrderExist(id)
+   
+      function triggerFadeIn(element) {
+  element.classList.remove("fade-in-show");
+  element.classList.add("fade-in"); // opacity: 0 and transition set
+  void element.offsetWidth; // force reflow
+  element.classList.add("fade-in-show"); // opacity: 1 triggers transition
+}
+
+
+  
+ 
+
+
+   function OrderExist(id)//InOrderExist(id)
    {
      console.log("randomid:", id);
     
       var isfound = false;
-      let incoming = document.getElementById("incoming-inner");
-      for (let i = 0; i < incoming.children.length; i++){
-        console.log("i", i);
-        console.log("child i:", incoming.children[i]); 
+
+      let incoming = document.getElementById(id);
+      isfound = incoming!= null ? true : isfound;
+      // let incoming = document.getElementById("incoming-inner");
+      // for (let i = 0; i < incoming.children.length; i++){
+      //   console.log("i", i);
+      //   console.log("child i:", incoming.children[i]); 
         
-        // if(!incoming.children[i].hasOwnProperty("id")){
-        //   return false;
-        // }
-        // else
-        // {
-          if(incoming.children[i].id == id){
-            isfound = true;
-            console.log("matching id!");
-          }
+      //   // if(!incoming.children[i].hasOwnProperty("id")){
+      //   //   return false;
+      //   // }
+      //   // else
+      //   // {
+      //     if(incoming.children[i].id == id){
+      //       isfound = true;
+      //       console.log("matching id!");
+      //     }
             
-        //}
-      }
+      //   //}
+      // }
           //if(incoming.children.(item => item.id == id)){
       return isfound;
       
@@ -354,22 +576,31 @@
  
    
    //mockFetchOrders();
-   function MockProcessOrders(){
+  //  function OldMockProcessOrders(){
    
-   let randomorder = mockReadyOrder();
-   console.log(randomorder);
-   console.log("orderExist?:", InOrderExist(randomorder.id));
-   if(!randomorder.isReady && !InOrderExist(randomorder.id)){
+  //  let randomorder = mockReadyOrder();
+  //  console.log(randomorder);
+  //  console.log("orderExist?:", InOrderExist(randomorder.id));
+  //  if(!randomorder.isReady && !InOrderExist(randomorder.id)){
+  //     addBoxOrderToParent(randomorder);
+  //  }
+  //  else if(randomorder.isReady == true && InOrderExist(randomorder.id)) //ready == no current animation
+  //  {
+  //     MoveBigBoxToRight(randomorder); //promise that waits for other ready animations
+  //  }
+   
+  // }
+
+  function MockProcessOrders() {
+    let randomorder = mockReadyOrder();
+    if (!randomorder.isReady && !OrderExist(randomorder.id)) {
       addBoxOrderToParent(randomorder);
-   }
-   else if(randomorder.isReady == true && InOrderExist(randomorder.id)) //ready == no current animation
-   {
-      MoveBigBoxToRight(randomorder); //promise that waits for other ready animations
-   }
-   
+    } else if (randomorder.isReady && OrderExist(randomorder.id)) {
+      enqueueReadyOrder(randomorder); // Instead of calling MoveBigBoxToRight directly
+    }
   }
   
-  setInterval(() => MockProcessOrders(), 4000);
+  setInterval(() => MockProcessOrders(), 100);
   
   
   //MoveBigBoxToRight();
