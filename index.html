@@ -149,6 +149,8 @@
         
         let orderQueue = [];
         let isProcessingOrder = false;
+        let FetchInOrders = new Set();
+        let FetchOutOrders = new Set();
         let HandledOrders = new Set();
         function testadd()
         {  
@@ -156,6 +158,54 @@
            /*addBoxToParent("incoming-boxes", "newtest1", "order5");*/
   
         }
+
+        async function fetchOrders(interval = 200) {
+            const url = 'http://localhost:7071/api/GetOrder?name=localrun'; // change URL as needed
+
+            async function fetchOnce() {
+              try {
+                const response = await fetch(url,
+                {
+                  method: 'GET',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  mode: 'cors',            // Needed when calling localhost:7071 from another origin
+                  cache: 'no-cache',       // Optional, avoids stale data
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+                const order = await response.json();
+                console.log('Fetched order:', order);
+                return order;
+              } catch (err) {
+                console.error('Failed to fetch order:', err);
+                return null;
+              }
+            }
+
+            async function poll() {
+              const order = await fetchOnce();
+              if(order)
+              {
+                MockProcessOrders(order);
+              }
+
+              // if(!order.isReady){
+              //   FetchInOrders.push(order)
+              // }
+              // else{
+              //   FetchOutOrders.push(order);
+              // }
+              // Schedule next fetch after interval
+              setTimeout(poll, interval);
+              return order; 
+            }
+            poll();
+           
+        }
+
         
         function mockFetchOrders()
         {
@@ -179,9 +229,10 @@
         }
           
         function enqueueReadyOrder(order) {
-          if(HandledOrders.has(order.id)) return;
+          //const existsAndReady = orders.some(order => order.id === orderId && order.isReady === true);
+          if(HandledOrders.has(order.OrderNumber)) return;
           orderQueue.push(order);
-          HandledOrders.add(order.id);
+          HandledOrders.add(order.OrderNumber);
           processQueue(); // Start processing if not already
         }
 
@@ -228,7 +279,7 @@
 
      function addBoxOrderToParent(order){
       
-      addBoxToParent("incoming-inner","order" + order.id, order.id);
+      addBoxToParent("incoming-inner","order" + order.OrderNumber, order.OrderNumber);
       
         
      }
@@ -347,18 +398,13 @@
         if(incoming.firstElementChild)
         {
           rect = incoming.firstElementChild.getBoundingClientRect();
-          style = window.getComputedStyle(incoming.firstElementChild);
-         
         }
-        
-
-
         let flyer = document.createElement("div");
         flyer.id = "flyer";
         flyer.style.position = "fixed";
         flyer.style.top = rect.top + "px";
         flyer.style.left = rect.left + "px";
-        flyer.classList.add("frontElement", "bg-primary", "h4", "text-white", "topbig-box");
+        flyer.classList.add("frontElement", "bg-success", "h4", "text-white", "topbig-box");
         flyer.innerText = "order" + orderid; 
         
         document.body.appendChild(flyer);
@@ -401,9 +447,6 @@
        
 }
 
-    
-      
-    
     function AddListenerOnAnimation(flyerid, orderid)
     {
       //MoveOrder(orderId); new code: NO other ready order seem to replace it! nothing other happens just one reay animatin plays
@@ -456,9 +499,9 @@
     
    async function MoveBigBoxToRight(order) //not used at the moment
    {
-     let element = await waitForRemoveFlag(order.id);
+     let element = await waitForRemoveFlag(order.OrderNumber);
      if (!element) return;
-     console.log("Animation completed for:", order.id);
+     console.log("Animation completed for:", order.OrderNumber);
      
      console.log("should be moved to ready orders after the move by listener")
         
@@ -591,16 +634,18 @@
    
   // }
 
-  function MockProcessOrders() {
-    let randomorder = mockReadyOrder();
-    if (!randomorder.isReady && !OrderExist(randomorder.id)) {
+  function MockProcessOrders(order) {
+    let randomorder = order;//mockReadyOrder();
+    if (!randomorder.IsReady && !OrderExist(randomorder.OrderNumber)) {
       addBoxOrderToParent(randomorder);
-    } else if (randomorder.isReady && OrderExist(randomorder.id)) {
+    } else if (randomorder.IsReady && OrderExist(randomorder.OrderNumber)) {
       enqueueReadyOrder(randomorder); // Instead of calling MoveBigBoxToRight directly
     }
   }
   
-  setInterval(() => MockProcessOrders(), 100);
+  fetchOrders();
+  
+  //setInterval(() => MockProcessOrders(), 100);
   
   
   //MoveBigBoxToRight();
